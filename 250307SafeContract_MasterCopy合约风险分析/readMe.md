@@ -1,4 +1,4 @@
-# 背景
+# 1 背景
 ## bybit安全事件
 - 近期bybit出现了安全事故，被黑客盗走15亿美金资产
 - 黑客控制了bybit团队使用的safe钱包，并利用safe合约机制替换了其impl合约完成了资金的盗取操作![img.png](img.png)
@@ -12,10 +12,10 @@
   - 该proxy合约（masterCopy）地址的控制权在谁手里？
   - 该proxy合约（masterCopy）是否存在被update或者revoke的风险？
   - ![img_2.png](img_2.png)
-# 结论
+# 2 结论
    - 无对应风险，masterCopy合约不是proxy架构，且无有效owner可以发起任何交易
    - polygonscan上看到的masterCopy合约是一个proxy架构，这个页面展示是错误的。
-# 详细分析（以某个safe地址为例）
+# 3 详细分析（以某个safe地址为例）
 ## 某个safe地址
 - 地址 0xE4dD515Cf1Bd1F.........300Fd074aB68D5Bff
 - owner信息如下
@@ -36,12 +36,12 @@
 - 在safe的合约代码中，也能看到对这部分的逻辑说明 
   - 确保"is an unusable safe " that a singleton should be![img_6.png](img_6.png)
 
-# safe合约中owner的初始化流程（setup方法）
+# 4 safe合约中owner的初始化流程（setup方法）
 - safe合约在创建后，需要由外部服务主动调用setup方法进行初始化，包括owner列表，module加载等![img_7.png](img_7.png)
 
 - owner初始化逻辑部分，可以看到，2个红框确保了一个safe合约无法被二次调用setup逻辑!![img_9.png](img_9.png)
 
-# ps：masterCopy合约的创建
+# 5 (番外) masterCopy合约的创建
 - safe团队调用另外一个公开的，定制化的工厂合约创建新合约
 ## 工厂合约
 - 无selector解析逻辑，将对应deploy需要的calldata直接传递给create2信令

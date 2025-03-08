@@ -5,8 +5,8 @@ Ledger 设备偶发出现无法连接到dapp的问题
 # 2 推荐流程（ledger设备直连pc场景下）
 
 1. 使用usb线连接ledger设备和pc，
-2. 输入密码，解锁ledger设备（确保设备上有“ethereum”这个app）   ![](./images/img.png)
-3. edger设备进入“ethereum” app   ![](./images/img_1.png)
+2. 输入密码，解锁ledger设备（确保设备上有“ethereum”这个app）   ![](images/readMe/img.png)
+3. edger设备进入“ethereum” app   ![](images/readMe/img_1.png)
 4. 在dapp里点击选择ledger登录，弹出“地址选择框”
    1. （框内左上角有“base path”字样）。
 

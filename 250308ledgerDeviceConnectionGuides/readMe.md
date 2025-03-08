@@ -47,7 +47,8 @@ Ledger 设备偶发出现无法连接到dapp的问题
 
 # 5 其他环境问题排查
 
-1. [ledger官方问题排查qa](https://support.ledger.com/article/115005165269-zd])
+1. [ledger官方问题排查qa](https://support.ledger.com/article/115005165269-zd)
+
    ![1741434203401](images/readMe/1741434203401.png)
    ![1741434217268](images/readMe/1741434217268.png)
 

@@ -39,6 +39,7 @@
   - mpc中是同态乘法和同态加法的变化，这个看起来就是同态的乘法之间？
 
 # 代码演示
+cd ./src && node DiffieHellmanKeyExchangeTest.js
 
 # gpt的答案
 

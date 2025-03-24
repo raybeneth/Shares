@@ -4,9 +4,11 @@
 - 本人零知识领域知识储备不足，概念上得太多，官网的文档又说得过于浅表，很难全部理解和吃透。只能老老实实的怼代码。
 - 先从外围逻辑入手，逐步深入，最终理出各种重点数据流
 - 学习的过程就是不断提出问题和回答问题
-  
+
 # 更新记录
+
 - 250323 还在过railgun privacy的外围逻辑，预计3月底4月初部分开始进入zk逻辑核对部分
+- 250324 继续补充已收集到的问题
 # railgun privacy重点技术问题
 
 ## railgun privacy账号体系构成？
@@ -128,7 +130,7 @@
 
 ### [terminalWallet]wallet.sign()部分的作用是什么？在哪里验证？
 
-> 
+> 在circom里验证。后续会单独出一期分析
 
 ### senderRandom的作用具体是什么？仅sender可见的annotations结构里还有walletName, TxType
 
@@ -138,7 +140,6 @@
 > - 相当于交易信息里本身是没有sender和receiver的，只是说在什么场景下，要添加sender的地址信息和receiver的地址信息等。
 > - 正在写文档，估计下周完成并提交
 
-
 ### private transfer交易的commitment数据构成
 
 > - ![1742731249649](images/readMe/1742731249649.png)
@@ -146,7 +147,40 @@
 ### [terminalWallet]note.hash是怎么计算的，有什么作用吗？
 
 > - 实际上就是commitmentHash，等于poseidon(notePublicKey, tokenInfoHash, tokenValue)
-> - 
+
+### railgun privacy中，railgunTxId是从哪里计算得到的？
+
+> todo
+
+### railgun privacy里是怎么解析链上的交易的？
+
+> 对链上所有的leaf操作(note)相关事件进行监听，尝试用自己的viewingPrivateKey和leaf commitment中的senderBlindedViewingKey(或receiverBlindedViewingKey)进行计算得到sharedKey
+> 如果这个sharedKey能解密对应note的commitment.cipherText，则代表这个note中的当前交易是自己发出（或收到的）
+> 如果解密不出来，代表这个交易跟自己无关
+
+### 为什么railgun privacy的最大资产amount数量只有128bit？
+
+> 因为amount数量被加密记录在commitment.cipherText里，其中amount和sharedRandom一起占用并平分32字节的空间，即amount最大为2^128.
+> 注意这里可以进一步理解，首先前96Bytes，分别是encodedMPK(32Bytes), tokenInfoHash(32Bytes), random(16Bytes)+value(16Bytes), 剩余的内容即为加密的memo
+
+### 如果sender和receiver都能看到sharedRandom这个字段，那么如何证明自己有这个资产？
+
+> 进行中，之后会在railgun privacy circom的zk逻辑中进行说明
+
+### private transfer时, memo（转账备注）长度有上限吗？
+
+> 可以理解为没有。
+> 从前述可以得知, commitment.cipherText中，除了96字节的头结构以外，剩下的都是序列化后的memo内容
+
+### commitment.annotation的数据只有sender可见吗？
+
+> 是的，因为数据由senderViewingPrivateKey加密。
+> 严格意义上来说，只有拥有这个key的人可见（sender自己，以及对应的viewOnly钱包）
+> 内部的数据项包括senderRandom, txOutputType, walletSource(walletName)
+
+### sender可以在发送交易的过程中隐藏自己的地址吗？即receiver不知道这笔钱谁转给自己的
+
+> 可以。前面已说明，sender可以隐藏自己的地址（在private transfer中）
 
 ## 测试操作解析
 

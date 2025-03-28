@@ -17,7 +17,7 @@
 - 尝试用这两个key去解密commitment.cipherText, 如果能解密成功，代表自己就是交易的receiver(或sender)
   
   - 通过diffieHellman key exchange算法确保只有交易双方能生成正确的aesKey
-  - 详情参考 [diffieHellman密钥交换算法在railgun privacy系统中的应用](https://github.com/TangCYxy/Shares/tree/main/250318%20railgun%20privacy%E4%B8%ADdiffieHellman%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2%E7%AE%97%E6%B3%95%E7%9A%84%E5%88%86%E6%9E%90%E5%92%8C%E4%BD%93%E7%8E%B0(%E4%BA%A4%E6%98%93%E5%8F%8C%E6%96%B9%E8%A7%A3%E5%AF%86Note )
+  - 详情参考 [diffieHellman密钥交换算法在railgun privacy系统中的应用](https://github.com/TangCYxy/Shares/tree/main/250318%20railgun%20privacy%E4%B8%ADdiffieHellman%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2%E7%AE%97%E6%B3%95%E7%9A%84%E5%88%86%E6%9E%90%E5%92%8C%E4%BD%93%E7%8E%B0(%E4%BA%A4%E6%98%93%E5%8F%8C%E6%96%B9%E8%A7%A3%E5%AF%86Note) )
   
   ## 交易对手方0zk地址的解析
 - 解密成功后，进一步解密对应的交易涉及的资产信息和交易对手方0zk地址

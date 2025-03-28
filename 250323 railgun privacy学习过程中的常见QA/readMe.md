@@ -182,7 +182,19 @@
 
 > 可以。前面已说明，sender可以隐藏自己的地址（在private transfer中）
 
-## 测试操作解析
+### 在private transfer过程中，sender的spendingPrivateKey在哪里体现的作用？
 
+> todo，是仅在zk中使用吗？
+
+### 在evm合约中，boundParams.unshield有3个可选值，none, unshield, override（或redirect）, 有什么区别吗？
+
+> 0代表不是unshield（private transfer）， 1代表就是unshield操作，2代表override（即行为由外部解析，比如private swap的过程涉及到先unshield然后马上shield存入）
 > 
+### 在交易过程中，如果senderRandom设置为非null（或非全0）会发生什么？
+> 在作为receiver解密sender 0zk地址的过程中，如果encodedMPK有效，sender愿意暴露自己的地址给receiver，但是如果senderRandom设置为其他值，receiver如何知道这个值呢？
+> 
+> - 实际还是优先看encodedMPK是如何设置，如果设置为receiver可见，senderRandom固定设置null（或全0）
+> - 如果encodedMPK设置为对receiver不可见，则senderRandom无论怎么设置都没有意义
+
+## 测试操作解析
 

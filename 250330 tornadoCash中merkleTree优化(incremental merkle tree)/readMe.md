@@ -69,24 +69,24 @@
 
 ### 过程说明
 
-#### 第一轮for，i = 0(增加方向为从leaf 到 root)
-
 currentIndex = nextIndex = 0
 
-进入偶数逻辑
-left = currentHash = 1
-right = zeros(0) = 深度为0的全0树merkleRoot
-filledSubtrees[0] = currentLevelHash = 1
-计算currentHash = hash(1, zeros(0))
-currentIndex = currentIndex/2 = 0
+#### 第一轮for，i = 0(增加方向为从leaf 到 root)
+
+- 进入偶数逻辑
+  - left = currentHash = 1
+  - right = zeros(0) = 深度为0的全0树merkleRoot
+  - filledSubtrees[0] = currentLevelHash = 1
+  - 计算currentHash = hash(1, zeros(0))
+  - currentIndex = currentIndex/2 = 0
 
 #### 第二轮for, i = 1, currentIndex = 0 —— 第一层
 
-仍然进入偶数逻辑
-left = currentHash = hash(1, zeros(0))
-right = zeros(1)  = 深度为1的全0树merkleRoot
-filledSubtrees[1] = currentLevelHash = hash(1, zeros(0))
-计算currentHash = hash(hash(1, zeros(0)), zeros(1)) = **merkleRoot**
+- 仍然进入偶数逻辑
+  - left = currentHash = hash(1, zeros(0))
+  - right = zeros(1)  = 深度为1的全0树merkleRoot
+  - filledSubtrees[1] = currentLevelHash = hash(1, zeros(0))
+  - 计算currentHash = hash(hash(1, zeros(0)), zeros(1)) = **merkleRoot**
 
 #### 无第三轮
 
@@ -104,20 +104,20 @@ currentIndex = nextIndex = 1
 
 #### 第一轮for，i = 0(增加方向为从leaf 到 root)——第二层
 
-进入奇数逻辑
-left = filledSubtrees[0] = 1
-right = currentHash = 2
-计算currentHash = hash(1, 2)
-currentIndex = currentIndex/2 = 0
+- 进入奇数逻辑
+  - left = filledSubtrees[0] = 1
+  - right = currentHash = 2
+  - 计算currentHash = hash(1, 2)
+  - currentIndex = currentIndex/2 = 0
 
 #### 第二轮for, i = 1, currentIndex = 0 —— 第一层（仍然是左侧节点）
 
-进入偶数逻辑
-left = currentHash = hash(1, 2)
-right = zeros(1)  = 深度为1的全0树merkleRoot
-filledSubtrees[1] = currentLevelHash = hash(1, 2)
-计算currentHash = hash(hash(1, 2), zeros(1))
-currentIndex = currentIndex / 2 = 0
+- 进入偶数逻辑
+  - left = currentHash = hash(1, 2)
+  - right = zeros(1)  = 深度为1的全0树merkleRoot
+  - filledSubtrees[1] = currentLevelHash = hash(1, 2)
+  - 计算currentHash = hash(hash(1, 2), zeros(1))
+  - currentIndex = currentIndex / 2 = 0
 
 #### 无第三轮
 
@@ -130,20 +130,20 @@ currentIndex = nextIndex = 2
 
 #### 第一轮for，i = 0(增加方向为从leaf 到 root)——第二层
 
-进入偶数逻辑
-left = currentHash   ( = 3)
-right = zeros(0) = 深度为0的全0树merkleRoot
-filledSubtrees[0] = currentLevelHash = 3
-计算currentHash = hash(3, zeros(0))
-currentIndex = currentIndex/2 = 1
+- 进入偶数逻辑
+  - left = currentHash   ( = 3)
+  - right = zeros(0) = 深度为0的全0树merkleRoot
+  - filledSubtrees[0] = currentLevelHash = 3
+  - 计算currentHash = hash(3, zeros(0))
+  - currentIndex = currentIndex/2 = 1
 
 #### 第二轮for, i = 1, currentIndex = 1 —— 第一层（是右侧节点）
 
-进入奇数逻辑
-left = filledSubtrees[0] = hash(1, 2)
-right = currentLevelHash = hash(3, zeros(0))
-计算currentHash = hash(hash(1, 2), hash(3, zeros(0)))
-currentIndex = currentIndex / 2 = 0
+- 进入奇数逻辑
+  - left = filledSubtrees[0] = hash(1, 2)
+  - right = currentLevelHash = hash(3, zeros(0))
+  - 计算currentHash = hash(hash(1, 2), hash(3, zeros(0)))
+  - currentIndex = currentIndex / 2 = 0
 
 #### 无第三轮
 
@@ -157,19 +157,19 @@ currentIndex = nextIndex = 3
 
 #### 第一轮for，i = 0(增加方向为从leaf 到 root)——第二层
 
-进入奇数逻辑
-left = filledSubtrees[0] = 3
-right = currentHash = 4
-计算currentHash = hash(3, 4)
-currentIndex = currentIndex/2 = 1
+- 进入奇数逻辑
+  - left = filledSubtrees[0] = 3
+  - right = currentHash = 4
+  - 计算currentHash = hash(3, 4)
+  - currentIndex = currentIndex/2 = 1
 
 #### 第二轮for, i = 1, currentIndex = 1 —— 第一层（是右侧节点）
 
-进入奇数逻辑
-left = filledSubtrees[1] = hash(1, 2)
-right = currentHash = hash(3, 4)
-计算currentHash = hash(hash(1, 2), hash(3, 4))
-currentIndex = currentIndex / 2 = 0
+- 进入奇数逻辑
+  - left = filledSubtrees[1] = hash(1, 2)
+  - right = currentHash = hash(3, 4)
+  - 计算currentHash = hash(hash(1, 2), hash(3, 4))
+  - currentIndex = currentIndex / 2 = 0
 
 #### 无第三轮
 

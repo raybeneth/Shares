@@ -8,7 +8,7 @@
   - railgun privacy和tornado cash均不存在并发要求。
   - 即使A和B同时存款，也不影响各自资产的正确性
 - 对于取款操作
-  - tornado cash仅缓存最终100个merkleRoot，即在生成取款证明后需要尽快提交交易，否则会因为链上状态变更过大导致取款证明失效，进而导致操作失败。
+  - tornado cash仅缓存最近100个merkleRoot，即在生成取款证明后需要尽快提交交易，否则会因为链上状态变更过大导致取款证明失效，进而导致操作失败。
     - 失败后重新根据链上最新的merkleRoot生成证明并提交即可。
   - railgun privacy对于取款操作无任何并发或者时间要求
 

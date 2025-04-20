@@ -23,9 +23,13 @@
 
 ## railgun privacy 对内部的merkleTree做了哪些优化？
 
-- 参考tornadoCash，提前计算高度为16的merkleTree的
+- 参考tornadoCash，提前计算高度为16的merkleTree
 
-## railgun privacy 和tornadoCash，ZCash等实现的异同？
+## railgun privacy 和tornadoCash，ZCash等实现的异同？（解答未完成）
+> - 相比于tornado cash来说
+>   - 相同点：使用了相同的incremental merkle tree结构来储存leaf
+>   - 不同点：储存所有的merkleTree，能解决大量交易下，证明无效的问题。
+> 
 
 ## railgun privacy 如何做到仅交易双方对交易记录可见？
 
@@ -42,14 +46,16 @@
 
 ## railgun privacy系统中的POI是如何操作的，如何访问，存储，验证等
 
-> 
+> - 从解析上来说，实际上就是标记某些shield的leaf有问题，需要通过生成一个zk proof去证明，当前使用的leaf不是由这个leaf派生出来的。
+> - 感觉性能可能是个问题？
 
 ## railgun privacy系统中，使用broadcaster进行交易广播的操作对交易流程本身有哪些影响？
 
-> 
+> 相当于如果是使用外部的broadcaster，就还会涉及到多生成一笔给broadcaster的fee的交易。
+> 可以单独写一篇图文，broadcaster接受，上链流程等
 
 ## 为什么设计中非得内嵌一个db对象，而不是定义为接口？
-
+> 或者说，用这个js服务作为单独的公用服务，从这里获取和解析余额内容？—— 可靠性又不太够
 > 这样很难移植到后端服务，不太理解
 
 # 详细QA
@@ -62,14 +68,17 @@
 
 > - 详情参见 [railgun privacy 账号体系](https://github.com/TangCYxy/Shares/tree/main/250313%20railgun%20privacy%E8%B4%A6%E6%88%B7%E4%BD%93%E7%B3%BB%E5%88%86%E4%BA%AB)
 
-### masterPrivateKey的使用场景具体是什么？看起来基本都是使用spendingPublicKey, msaterPublicKey以及viewingKeyPair？
+### spendingPrivateKey的使用场景具体是什么？看起来基本都是使用spendingPublicKey, msaterPublicKey以及viewingKeyPair？
 
-> 
+> - 在transact流程中，最终生成了所有的publicInputs, boundParams, commitmentsOut等。然后使用spendingPrivateKey对于publicInputs这个对象进行签名，然后签名信息一起作为transact方法的参数提交到链上
+> - 在链上railgun privacy合约收到了请求后，就会在zk里验证签名的有效性
+> - see [railgun privacy circuits](https://github.com/Railgun-Privacy/circuits-v2.git) -> verification step 2
 
 ### viewOnly钱包是怎么理解的呢？是如何做到只能看，不能交易的？给出的形式是只有viewingPublicKey，还是说要连着viewingPrivateKey一起给出呢？
 
-> - 因为viewingKeyPair主要是处理commitment的解密，spendingKeyPair才是处理资产交易相关的认证。所以只给出viewingKeyPair并不影响某个0zk地址的交易安全性
 > - 需要连着viewingPrivateKey一起给出，因为解密commitment需要计算一个sharedKey，sharedKey本身是由交易的其中一方拿自己的viewingPrivateKey（私有）和commitment中的blindedKey进行计算得到。所以在viewOnly钱包中，实际上包含viewingPrivateKey 和 viewingPublicKey
+> - 因为viewingKeyPair主要是处理commitment的解密，spendingKeyPair才是处理资产交易相关的认证。所以只给出viewingKeyPair并不影响某个0zk地址的交易安全性
+> - 补充，并且viewingPublicKey实际上是存在于0zk地址中，即所有人都知道viewingPublicKey, 所以仅持有viewingPublicKey并不能完成相关交易的观测（否则所有知道这个0zk地址的人都能看到其所有的交易记录）
 
 ## 源码阅读
 
@@ -127,7 +136,8 @@
 > 2笔交易。一笔transact（changeOut），sender和receiver都是自己，另一笔是unshield
 
 ### [broadcaster]使用broadcaster进行交易时，交易手续费是直接给了broadcaster的0zk地址，还是给的0x地址？
-
+> - 给了broadcaster的0zk地址，并且固定排列在npk.commitmentOut[0]
+>
 ### [terminalWallet]wallet.sign()部分的作用是什么？在哪里验证？
 
 > 在circom里验证。后续会单独出一期分析
@@ -148,7 +158,7 @@
 
 > - 实际上就是commitmentHash，等于poseidon(notePublicKey, tokenInfoHash, tokenValue)
 
-### railgun privacy中，railgunTxId是从哪里计算得到的？
+### railgun privacy中，railgunTxId是从哪里计算得到的？如果一个utxo拆分成了3个，那么有3个railgunTxId还是1个？
 
 > todo
 
@@ -165,7 +175,8 @@
 
 ### 如果sender和receiver都能看到sharedRandom这个字段，那么如何证明自己有这个资产？
 
-> 进行中，之后会在railgun privacy circom的zk逻辑中进行说明
+> 进行中，之后会在railgun privacy circom的zk逻辑中进行说明。
+> 3个层面，首先能构造出正确的merkleProof, 其次是证明自己知道sharedRandom，说明自己是交易双方之一。最后是证明自己对于正在使用的这个utxo的publicInputs签名信息符合
 
 ### private transfer时, memo（转账备注）长度有上限吗？
 

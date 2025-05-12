@@ -32,12 +32,16 @@ contract OwnbitMultiSig {
   // owners of M of these addresses will need to both sign a message
   // allowing the funds in this contract to be spent.
   mapping(address => uint256) private ownerActiveTimeMap; //uint256 is the active timestamp(in secs) of this owner
-  address[] private owners;
-  uint private required;
+  address[] private owners;// owner list .size = 3
+  uint private required; // threshold = 2
 
   // The contract nonce is not accessible to the contract so we
   // implement a nonce-like variable for replay protection.
   uint256 private spendNonce = 0;
+    mapping(address => bool) nonceUsed;
+    // nonce -> eoa链在管理的账户. 0, 1,
+//    我的签名，任何时候都可以校验通过，避免不停得拿成功的签名执行不同的交易。
+//    owner，nonce（双花），链信息（evm多个链，没个链上地址是一样的，防止多链重放），有效时间（usdc，validAfter和validBefore）
   
   // An event sent when funds are received.
   event Funded(address from, uint value);
@@ -57,7 +61,7 @@ contract OwnbitMultiSig {
   /// @param _required Number of required confirmations.
   constructor(address[] memory _owners, uint _required) validRequirement(_owners.length, _required) {
     for (uint i = 0; i < _owners.length; i++) {
-        //onwer should be distinct, and non-zero
+        //owner should be distinct, and non-zero
         if (ownerActiveTimeMap[_owners[i]] > 0 || _owners[i] == address(0x0)) {
             revert();
         }
@@ -68,14 +72,16 @@ contract OwnbitMultiSig {
   }
 
   // The fallback function for this contract.
+    // a send b 1 eth/ b contract selfdestruct / a access b contract methodA, methodA is not defined in b
   fallback() external payable {
-    if (msg.value > 0) {
+    if (msg.value > 0) { //eth, pol
         emit Funded(msg.sender, msg.value);
     }
   }
   
   // @dev Returns list of owners.
   // @return List of owner addresses.
+    // read only
   function getOwners() public view returns (address[] memory) {
     return owners;
   }
@@ -104,7 +110,7 @@ contract OwnbitMultiSig {
   
   function _messageToRecover(address destination, uint256 value, bytes memory data) private view returns (bytes32) {
     bytes32 hashedUnsignedMessage = generateMessageToSign(destination, value, data);
-    bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+    bytes memory prefix = "\x19Ethereum Signed Message:\n32";// personalSign前缀，
     return keccak256(abi.encodePacked(prefix, hashedUnsignedMessage));
   }
   
@@ -113,11 +119,16 @@ contract OwnbitMultiSig {
   //data for transfer ether: 0x
   //data for transfer erc20 example: 0xa9059cbb000000000000000000000000ac6342a7efb995d63cc91db49f6023e95873d25000000000000000000000000000000000000000000000000000000000000003e8
   //data for transfer erc721 example: 0x42842e0e00000000000000000000000097b65ad59c8c96f2dd786751e6279a1a6d34a4810000000000000000000000006cb33e7179860d24635c66850f1f6a5d4f8eee6d0000000000000000000000000000000000000000000000000000000000042134
-  //data can contain any data to be executed. 
-  function spend(address destination, uint256 value, uint8[] memory vs, bytes32[] memory rs, bytes32[] memory ss, bytes calldata data) external {
+  //data can contain any data to be executed.
+    // ecdsa签名 eth/polygon/btc. 32 r, 32 s, 1 v
+    // eddsa签名 r, s
+    // 1个请求里，提交了所有需要签名的owner的signature.
+  function spend(address destination, bytes32 nonce, uint256 value, uint8[] memory vs, bytes32[] memory rs, bytes32[] memory ss, bytes calldata data) external {
     require(destination != address(this), "Not allow sending to yourself");
+      require(nonceUsed[nonce] == false, "Nonce already used");
     require(_validSignature(destination, value, vs, rs, ss, data), "invalid signatures");
     spendNonce = spendNonce + 1;
+      nonceUsed[nonce] = true;
     //transfer tokens from this contract to the destination address
     (bool sent,) = destination.call{value: value}(data);
     if (sent) {
@@ -127,6 +138,7 @@ contract OwnbitMultiSig {
   
   //send a tx from the owner address to active the owner
   //Allow the owner to transfer some ETH, although this is not necessary.
+    // ownerable2Step(). a transfer ownership b, ensure b address is correct. openzeppelin
   function active() external payable {
     require(ownerActiveTimeMap[msg.sender] > 0, "Not an owner");
     ownerActiveTimeMap[msg.sender] = block.timestamp;
@@ -165,6 +177,7 @@ contract OwnbitMultiSig {
         //recover the address associated with the public key from elliptic curve signature or return zero on error 
         addrs[i] = ecrecover(message, vs[i]+27, rs[i], ss[i]);
     }
+      // 0/1 曲线上选择点 s, n - s
     require(_distinctOwners(addrs));
     _updateActiveTime(addrs); //update addrs' active timestamp
     
@@ -203,6 +216,9 @@ contract OwnbitMultiSig {
         }
     }
   }
+    // oscar, ted, kira / 2
+    // offline transfer to niko. oscar, ted. nonce=0, nonce=1, nonce=2. batch(tx1, tx2, tx3) = packagedTx1
+    // gas relay submit tx on chain -> spend(niko.address, data, amount);
 
   //support ERC721 safeTransferFrom
   function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes calldata _data) external returns(bytes4) {

@@ -1,5 +1,18 @@
 /**
  *Submitted for verification at Etherscan.io on 2021-02-24
+
+
+ purpose -> gasless collect(multi-chain Evm)
+ 1 eoa(eth, native currency), gasLimit(actually) + gasPrice(maxFee + tipFee + onChainBaseFee) -> gas
+ 2 token original gasless(usdt.metaTransaction, usdc.transferWithAuthorization eip3009) -> 3rd eoa submit (signed)
+     limited by the token implementation of various chain
+ 3 contract wallet(safe) -> 3rd eoa submit tx(owner signed)
+    expensive
+    .eg ownbit multisig wallet(cheaper than safe)
+ 4 aa wallet()
+    more expensive than contract wallet(before eip7702)
+ 5 customized wallet
+     forwarder(flush & flush token)
 */
 
 pragma solidity 0.7.5;
@@ -35,7 +48,7 @@ contract CloneFactory {
         bytes20 targetBytes = bytes20(target);
         assembly {
         // load the next free memory slot as a place to store the clone contract data
-            let clone := mload(0x40)
+            let clone := mload(0x40) // ptr initialized
 
         // The bytecode block below is responsible for contract initialization
         // during deployment, it is worth noting the proxied contract constructor will not be called during
@@ -45,6 +58,15 @@ contract CloneFactory {
                 clone,
                 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
             )
+
+            // A + targetContractAddress + B = newContract.runtimeCode
+            // 3d602d80600a3d3981f3363d3d373d3d3d363d73 20字节
+            // pos = 0x14  targetBytes 20字节
+            // pos = 0x28 = 32 + 8 = 40
+            // (15 out of 32字节)  5af43d82803e903d91602b57fd5bf3
+            // length = 0x37 = 48 + 7 = 55
+
+
 
         // This stores the address location of the implementation contract
         // so that the proxy knows where to delegate call logic to
@@ -60,6 +82,7 @@ contract CloneFactory {
         // deploy the contract using the CREATE2 opcode
         // this deploys the minimal proxy defined above, which will proxy all
         // calls to use the logic defined in the implementation contract `target`
+            // create2(eth value, start pos(ptr), length, salt)
             result := create2(0, clone, 0x37, salt)
         }
     }
@@ -142,6 +165,8 @@ library TransferHelper {
         // bytes4(keccak256(bytes('transfer(address,uint256)')));
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0xa9059cbb, to, value));
         require(
+        // success stands for the function call (transfer(xxx,xxx)) -> no revert
+        // void || true -> no revert, return true/false
             success && (data.length == 0 || abi.decode(data, (bool))),
             'TransferHelper::safeTransfer: transfer failed'
         );
@@ -182,6 +207,7 @@ contract Forwarder {
      */
     function init(address _parentAddress) external onlyUninitialized {
         parentAddress = _parentAddress;
+        // ? create2 pre calculate address for this contract
         uint256 value = address(this).balance;
 
         if (value == 0) {
@@ -199,6 +225,8 @@ contract Forwarder {
 
     /**
      * Modifier that will execute internal code block only if the sender is the parent address
+     tx.origin vs msg.sender
+     a -> b contract -> c contract
      */
     modifier onlyParent {
         require(msg.sender == parentAddress, 'Only Parent');
@@ -215,6 +243,7 @@ contract Forwarder {
 
     /**
      * Default function; Gets called when data is sent but does not match any other function
+     funcA
      */
     fallback() external payable {
         flush();
@@ -262,8 +291,19 @@ contract Forwarder {
     }
 }
 
+/**
+* 1 deploy forwarder contract without factory(directly deploy)
+     -> address(implementationAddress, )
+     copy the runtimeCode to address storage
+  2 biz deploy through ForwarderFactory
+       specify address
+       manually build a proxy contract(no slot usage for proxy contract,
+        implementation contract address coded in contract runtimeCode)
+  advantages?
+    gas efficient
+*/
 contract ForwarderFactory is CloneFactory {
-    address public implementationAddress;
+    address public implementationAddress;// the basic logic contract
 
     event ForwarderCreated(address newForwarderAddress, address parentAddress);
 
@@ -271,6 +311,7 @@ contract ForwarderFactory is CloneFactory {
         implementationAddress = _implementationAddress;
     }
 
+    // create2 instruction
     function createForwarder(address parent, bytes32 salt) external {
         // include the signers in the salt so any contract deployed to a given address must have the same signers
         bytes32 finalSalt = keccak256(abi.encodePacked(parent, salt));

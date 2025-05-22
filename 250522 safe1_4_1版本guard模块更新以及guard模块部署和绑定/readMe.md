@@ -4,7 +4,7 @@
 
 # 结论
 - safe1.3.0版本和1.4.1版本需要绑定不同的guard合约，否则会报错。
-  - 昨天的交易不是safe的限制，而是guard模块版本和safe的版本不匹配导致
+  - 上次绑定1.3.0版本guard模块到safe失败的原因是guard模块版本和safe的版本不匹配导致
     - safe合约版本是1.4.1, 而本地的safe代码和模板guard模块是1.3.0版本
   - 强行提交会报错，可以看到原因是guard合约没有实现新版本eip165的接口要求 
     - 0x76fc3c4698c1cbfe36948682569329fc8afed3e29d4de58033435ce43ff0337d
@@ -13,6 +13,13 @@
 
 # 效果图
 ![img_3.png](img_3.png)
+
+# 相关地址
+- 均为ethereum sepolia测试网络
+- safe合约地址 0xeF9D93A927C412A2b8C0A95BeDf10cD31e810a1e
+- 强行绑定1.3.1版本guard合约到1.4.1版本safe合约失败的交易 0x76fc3c4698c1cbfe36948682569329fc8afed3e29d4de58033435ce43ff0337d
+- 1.4.1版本的delegateCallGuard合约地址 0x63fC590C7d9252Ee2380Bdc81D5D2987D0846fFB
+
 # 分析
 ## safe合约1.3.0版本到1.4.1版本的guard模块相关变更
 - guard合约定义变更
@@ -27,7 +34,6 @@
 ## 部署guard合约到链上
 - 方案1: 在remix推送简单的guard合约到链上并verify
   - [简单的guard合约代码](./src/contracts/SafeDelegateCallGuard_1_4_1.sol)
-  - sepolia address: 0x63fC590C7d9252Ee2380Bdc81D5D2987D0846fFB
 - 方案2: 编译，发布，verify safe 1.4.1版本仓库里的guard合约
   - 
 

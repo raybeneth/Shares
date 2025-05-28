@@ -46,7 +46,7 @@
   - 相当于用paillier加密算法的公钥PK加密了a这个秘密，最终可以用A手里对应的sk进行解密。
 
 - 2 B构造 c2 = (b ⊗ c1) ⊕ encPK(β') 
-  - = (b ⊕ encPK(a)) ⊕ encPK(β') 
+  - = (b ⊗ encPK(a)) ⊕ encPK(β') 
   - = encPK(ab) ⊕ encPK(β') 
   - = encPK(ab + β')
     - 此时B计算得到β = -β', 并将c2发送给A

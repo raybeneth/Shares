@@ -6,8 +6,10 @@
 - safe的合约钱包的交易权限确认
   - 各个owner链下签名，最后提交到链上进行验证
 - 各个token合约的gasless实现，允许fromAddress在没有主币的场景下发起交易
-  - eip2612(permit)
-  - eip3009(transferWithAuthorization)
+  - eip2612(permit)——approve的gasless替代
+    - a offline-sign permit "b get some allowance" -> b submit "transferFrom a to c with amount"
+  - eip3009(transferWithAuthorization)——transfer的gasless替代
+    - a offline-sign transaction "a transfer to c with amount" -> b submit
 - 身份认证
   - 某些功能合约（如地址簿），确认owner有操作权限
   - 
@@ -27,7 +29,7 @@
 ## 要签名的操作**核心信息**
 - 避免攻击者通过“抢跑“的方式完成攻击
   - 即使攻击者作为第三方（比如httpRpcProvider）提前获取了你的签名和交易信息，并在你之前将交易上链，也无法篡改交易内容
-  - 思考一个场景，签名的消息里只包括from地址（你的账户），其他人获取到你的签名后，将to和amount信息窜改为自己的，即完成攻击
+  - 思考一个场景，签名的消息里只包括from地址（你的账户），其他人获取到你的签名后，将to和amount信息篡改为自己的，即完成攻击
 - 如转账操作的from, to, amount, 
   - msgToSign = Hash(from, to, amount)
 - 如合约交易的to, amount, calldata, callType(delegatecall or not), fee refund 
@@ -36,7 +38,7 @@
 ## nonce
 - 需要将nonce在合约里单独记录存储，并且将nonce信息打包进签名的一部分。
 - 避免攻击者通过重放已经验证通过的签名进行恶意攻击
-  - 思考一个场景，你转账给张三10USDT，签名信息里包括from, to, amount, 任何人截获这个消息也不能窜改（否则无法通过验证）
+  - 思考一个场景，你转账给张三10USDT，签名信息里包括from, to, amount, 任何人截获这个消息也不能篡改（否则无法通过验证）
     - 但是他可以不停的，无限的调用相同方法恶意消耗你的资金，直到抽干资产。
 - 合约里记录nonce的实现思路
   - 自增的nonce（dai, safe, usdt-polygon, ...)

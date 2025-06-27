@@ -19,7 +19,6 @@
     - 可以考虑blocksec, tenderly等区块链浏览器进行细节查看
 - 在整个蜜罐构造中，骗子需要部署2个合约，并分别调用方法
   - 部署quiz合约，将owner设置为自己地址的hash以及payload攻击合约地址的hash
-    - 
   - 部署payload攻击合约，
     - 并调用quiz合约的new方法更新response答案hash
   - 对quiz合约转账eth，并调用start方法设置答案

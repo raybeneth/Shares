@@ -56,7 +56,7 @@
 ### try方法
 - 受害者们用于答题的方法，所有人可调用
 - 可以看到，携带超过1个eth，并且命中response答案的sender就可以获取所有的资金
-![img_4.png](img_4.png)
+![img_11.png](img_11.png)
 ### start方法
 - 骗子在明面上用于更新quiz合约答案的方法，仅owner可调用
 - **注意这里，如果responseHash不为0，则不会实际修改**

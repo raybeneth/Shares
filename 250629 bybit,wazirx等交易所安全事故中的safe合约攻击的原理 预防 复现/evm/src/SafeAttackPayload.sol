@@ -14,6 +14,7 @@ contract SafeAttackPayload {
     }
 
     function upgradeImplTo(address payloadContractAddress, address newOwnerAddress) external {
+        require(owner ==address(0), "owner override! slot1 should be all zero");
         slot0 = payloadContractAddress;
         owner = newOwnerAddress;
     }

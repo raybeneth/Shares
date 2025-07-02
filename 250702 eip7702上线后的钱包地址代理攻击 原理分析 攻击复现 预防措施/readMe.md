@@ -95,12 +95,13 @@
   - 注意这里是调用的尾号ba629的payload攻击合约的方法，之前的payload攻击合约已经被本次的authList覆盖
   - ![img_12.png](img_12.png)
 - 交易完成后，受害者合约地址上遗留的 0.000000004274328244 ETH 也被转账到黑客账户中
-  - 
+
 ### 后续攻击交易 22815945, 22815946
 - 有兴趣的朋友可以进一步查看，通过一个另一个中转合约进行处理
 - 思路类似，不再赘述
 
-# geth中的eth实现原理
+# geth中的eip7702重点实现原理
+- [eip7702的交易code解析和加载 delegatecall的code装载](https://www.bilibili.com/video/BV1guN1zkESQ/?share_source=copy_web&vd_source=ce0cad875b0b4c2a4efa014c699df898&t=373)
 - 在交易执行前，先applyEip7702的authorization，再执行交易的calldata
 - 即黑客可以在一个交易内完成 delegate恶意合约并提取受害者eoa账号上的资金
 - ![img_2.png](img_2.png)

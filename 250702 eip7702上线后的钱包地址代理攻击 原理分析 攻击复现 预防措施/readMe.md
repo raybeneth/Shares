@@ -101,9 +101,90 @@
 - 思路类似，不再赘述
 
 # geth中的eip7702重点实现原理
+## 装载eip7702之后的eoa地址，code存在形式
+- code内容为23字节，0xef0100 + delegation地址
+  - ![img_26.png](img_26.png)
+- 在交易执行的时候，evm会把delegation地址的code copy到构造的"newContract"上下文对象中
+  - ![img_27.png](img_27.png)
+  - ![img_28.png](img_28.png)
+
+## eip7702代理地址信息的装载和交易执行的原子性
 - [eip7702的交易code解析和加载 delegatecall的code装载](https://www.bilibili.com/video/BV1guN1zkESQ/?share_source=copy_web&vd_source=ce0cad875b0b4c2a4efa014c699df898&t=373)
 - 在交易执行前，先applyEip7702的authorization，再执行交易的calldata
 - 即黑客可以在一个交易内完成 delegate恶意合约并提取受害者eoa账号上的资金
 - ![img_2.png](img_2.png)
 
+# 手搓eip7702协议对接
+- 考虑到大部分工程项目仍然以java和go为主，本次示例代码仍然还是java
+- [eip7702Test](./xxx)
+
+## 手搓的必要性
+### web3j官方库仍然还没有进一步实现
+- eip7702正式上线近2个月， 目前官方的java库实现进展缓慢，仍然还没有适配
+- [web3j - github - v4.14.0](https://github.com/LFDT-web3j/web3j.git)
+- ![img_13.png](img_13.png)
+- txType仍然还停留在去年的eip4844 blob交易
+
+## 手搓的思路
+- 不fork源码修，最小改动满足demo需求
+- 基于web3j大部分的已有能力实现
+
+## 手搓代码实现的重点
+### eip7702有独立的txType 0x04
+- 类比
+  - eip2930 -> 0x01
+  - eip1559 -> 0x02
+  - eip4844 -> 0x03
+  - **eip7702 -> 0x04**
+
+### txType的编码
+- txType被编码在字节头，evm会根据头的不同对后续字节进行rlp deserialize
+- ![img_14.png](img_14.png)
+- 
+### authority的签名信息和签名结构
+- geth中的定义, 结构数组
+  - ![img_15.png](img_15.png)
+  - ![img_16.png](img_16.png)
+
+### eip7702授权信息的构成和签名
+- hash((0x05) || rlp(chainId, address, nonce)
+- 注意事项
+  - 前缀1字节的magicWord(0x05)作为签名hash对应的明文之一
+  - 跟交易一样，authority地址通过rsv签名结构恢复
+  - v为0/1，而不是常规交易签名的27/28
+- ![img_17.png](img_17.png)
+- ![img_19.png](img_19.png)
+
+### eip7702授权信息在交易中的编码
+- 按rlp编码方式，将authList信息添加到交易最后（交易签名之前）
+- ![img_20.png](img_20.png)
+
+# 攻击代码复现
+- 使用前述手搓的java demo实现，模拟完成
+- 测试的黑客地址 0xcecCbBD9bCa111A2F794D78dD58c6470450a6716
+- 测试的受害者地址 0x41Ea3bA3c6FE1eAe27F37a8222c735b88b0A79D1
+- 攻击的payload合约地址 0xE03aA9F507B91164Cc044A33796f3A5146463a6c
+- 
+## 攻击的实现代码
+  - [java demo](./java/eip-7702-attack/src/main/java/com/tc/test/eip7702/Eip7702Test.java)
+
+## 攻击前，受害者资产，有eth, 有erc20 token
+- eth余额 0.0001
+- mock usdc token余额 3
+- ![img_29.png](img_29.png)
+## 攻击交易说明
+
+- 将地址delegate to 上次分享的safe攻击合约, 同时设置黑客的owner(6716)
+- [交易详情](https://sepolia.etherscan.io/tx/0x1269cd0576893eef3a6c774fbf2e62c2df988fcd4036606cce38abecb234b8cc)
+- 交易携带authorization结构![img_31.png](img_31.png)
+- 交易直接发给受害者eoa地址，并携带calldata![img_30.png](img_30.png)
+
+## 测试的黑客得手后转出coin(eth)
+- [转出coin(sepolia eth)](https://sepolia.etherscan.io/tx/0x530b1c3fa76a1f9ae855560508e737f2251fb93b8274da8c2bf4db33d0b80b45)
+- 交易直接发给受害者eoa地址，并携带calldata![img_32.png](img_32.png)
+- coin被转出![img_33.png](img_33.png)
+
+## 测试的黑客得手后转出token
+- [转出MOCK USDC Token](https://sepolia.etherscan.io/tx/0x3ede8d980d8786a77654cdf71c30f5351dddc9f5334b6274a9a86ea9b3315364)
+- 交易直接发给受害者eoa地址，并携带calldata，交易包含usdc转账![img_34.png](img_34.png)
 

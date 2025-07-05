@@ -38,8 +38,11 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
+        // createAccount
+        createAccount();
+
         // 执行攻击
-        attack();
+//        attack();
 
         // 提取资金
 //        withdrawTokens();
